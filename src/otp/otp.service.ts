@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { OtpTokenResponse } from './dtos/otp-token.interface';
+import { OtpTokenResponse } from './dtos/otp-token-response.interface';
 import moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OtpToken } from './otpToken.entity';
-import { Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { authenticator } from 'otplib';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class OtpService {
     @InjectRepository(OtpToken)
     private otpTokenRepo: Repository<OtpToken>,
   ) {}
-  private validateGenerateToken(author: string) {
+  private validateAuthor(author: string) {
     const errors: Array<{ error: string }> = [];
     if (!author) {
       errors.push({
@@ -25,22 +25,19 @@ export class OtpService {
           error: errors.flatMap(({ error }) => error),
         },
         HttpStatus.BAD_REQUEST,
-        {
-          cause: 'user param is required',
-        },
       );
     }
   }
 
-  async GenerateToken(
+  async generateToken(
     author: string,
     userId: string,
   ): Promise<OtpTokenResponse> {
-    this.validateGenerateToken(author);
+    console.log();
+    this.validateAuthor(author);
     const tokenResponse: OtpTokenResponse = new OtpTokenResponse();
 
     const expiresAt: Date = moment().add(5, 'm').toDate();
-    console.log('EXPIRES AT', expiresAt);
 
     const secret = userId + expiresAt.toTimeString();
 
@@ -48,12 +45,38 @@ export class OtpService {
       token: authenticator.generate(secret),
       userId,
       createdBy: author,
-      expiresAt: expiresAt.getTime(),
+      expiresAt: expiresAt,
     });
 
     tokenResponse.token = otp.token;
     tokenResponse.expires = otp.expiresAt;
 
     return tokenResponse;
+  }
+
+  async validateToken(author: string, token: string, userId: string) {
+    this.validateAuthor(author);
+
+    const otp = await this.otpTokenRepo.findOne({
+      where: {
+        userId,
+        token,
+        expiresAt: MoreThan(moment().toDate()),
+        usedAt: IsNull(),
+      },
+    });
+
+    if (!otp)
+      throw new HttpException(
+        { error: 'Unauthorized' },
+        HttpStatus.UNAUTHORIZED,
+      );
+
+    otp.usedAt = moment().toDate();
+    otp.usedBy = author;
+
+    await this.otpTokenRepo.save(otp);
+
+    return { sessionObject: 'TBI' };
   }
 }

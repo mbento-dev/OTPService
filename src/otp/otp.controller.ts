@@ -13,6 +13,15 @@ export class OtpController {
   })
   @ApiResponse({ status: 400, description: 'Invalid/bad request' })
   generateToken(@Ip() author: string, @Headers('userId') userId: string) {
-    return this.otpService.GenerateToken(author, userId);
+    return this.otpService.generateToken(author, userId);
+  }
+
+  @Get('validate')
+  validateToken(
+    @Ip() author: string,
+    @Headers('token') token: string,
+    @Headers('userId') userId: string,
+  ) {
+    return this.otpService.validateToken(author, token, userId);
   }
 }
