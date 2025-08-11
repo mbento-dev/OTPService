@@ -1,0 +1,30 @@
+services:
+  app:
+    container_name: otpservice
+    image: node:22
+    build: .
+    stdin_open: true
+    tty: true
+    working_dir: /usr/src/app
+    environment:
+      POSTGRES_PASSWORD: food
+      POSTGRES_USER: food
+      POSTGRES_HOST: db
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    volumes:
+      - .:/usr/src/app
+    command: sh -c "npm i && npm run start:dev"
+
+  db:
+    container_name: database
+    image: postgres:17.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tefabene
+      POSTGRES_PASSWORD: food
+      POSTGRES_USER: food
+    ports:
+      - '5432:5432'
