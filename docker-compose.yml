@@ -7,9 +7,10 @@ services:
     tty: true
     working_dir: /usr/src/app
     environment:
-      POSTGRES_PASSWORD: food
-      POSTGRES_USER: food
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
       POSTGRES_HOST: db
+      POSTGRES_SYNCRHONIZE: "true"
     ports:
       - '3000:3000'
     depends_on:
@@ -23,8 +24,8 @@ services:
     image: postgres:17.5-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: tefabene
-      POSTGRES_PASSWORD: food
-      POSTGRES_USER: food
+      POSTGRES_DB: otp
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
     ports:
       - '5432:5432'
