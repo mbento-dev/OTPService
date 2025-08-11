@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class otpToken {
+export class OtpToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -19,11 +19,13 @@ export class otpToken {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column()
+  createdBy: string;
+
   @Column({
     type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
   })
-  expiredAt: Date;
+  expiresAt: Date;
 
   @Column({
     type: 'timestamp',
