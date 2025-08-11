@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { OtpModule } from './otp/otp.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OtpToken } from './otp/otpToken.entity';
@@ -20,6 +19,6 @@ import { OtpToken } from './otp/otpToken.entity';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [],
 })
 export class AppModule {}
