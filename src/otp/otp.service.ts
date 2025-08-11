@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { OtpTokenResponse } from './dtos/otpTokenResponse.interface';
 import moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,8 +14,10 @@ export class OtpService {
     @InjectRepository(OtpToken)
     private otpTokenRepo: Repository<OtpToken>,
   ) {}
+  private readonly logger = new Logger('OtpService');
 
   public validateGenerateTokenPayload(payload: GenerateTokenPayload) {
+    this.logger.log('validating payload: ' + JSON.stringify(payload));
     const errors: Array<{ error: string }> = [];
     if (!payload.author) {
       errors.push({
@@ -28,6 +30,7 @@ export class OtpService {
       });
     }
     if (errors.length > 0) {
+      this.logger.warn('validation failed: ' + JSON.stringify(errors));
       throw new HttpException(
         {
           error: errors.flatMap(({ error }) => error),
@@ -40,6 +43,7 @@ export class OtpService {
   async generateToken(
     payload: GenerateTokenPayload,
   ): Promise<OtpTokenResponse> {
+    this.logger.log('generating token for user: ' + payload.userId);
     this.validateGenerateTokenPayload(payload);
     const tokenResponse: OtpTokenResponse = new OtpTokenResponse();
 
@@ -63,6 +67,7 @@ export class OtpService {
   }
 
   private validateValidateTokenPayload(payload: ValidateTokenPayload) {
+    this.logger.log('validating payload: ' + JSON.stringify(payload));
     const errors: Array<{ error: string }> = [];
     if (!payload.author) {
       errors.push({
@@ -80,6 +85,7 @@ export class OtpService {
       });
     }
     if (errors.length > 0) {
+      this.logger.warn('validation failed: ' + JSON.stringify(errors));
       throw new HttpException(
         {
           error: errors.flatMap(({ error }) => error),
@@ -90,6 +96,9 @@ export class OtpService {
   }
 
   async validateToken(payload: ValidateTokenPayload) {
+    this.logger.log(
+      'validating token: ' + payload.token + ' for user:' + payload.userId,
+    );
     this.validateValidateTokenPayload(payload);
 
     const otp = await this.otpTokenRepo.findOne({
@@ -107,8 +116,12 @@ export class OtpService {
         HttpStatus.UNAUTHORIZED,
       );
 
+    this.logger.log('consuming token');
+
     otp.usedAt = moment().toDate();
     otp.usedBy = payload.author;
+
+    this.logger.log('token consumed');
 
     await this.otpTokenRepo.save(otp);
 
