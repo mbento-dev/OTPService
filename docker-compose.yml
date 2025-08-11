@@ -19,6 +19,23 @@ services:
       - .:/usr/src/app
     command: sh -c "npm i && npm run start:dev"
 
+  test:
+    container_name: otpservicetest
+    image: node:22
+    working_dir: /usr/src/app
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_HOST: db
+      POSTGRES_SYNCRHONIZE: "true"
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    volumes:
+      - .:/usr/src/app
+    command: sh -c "npm i && npm run test:e2e"
+
   db:
     container_name: database
     image: postgres:17.5-alpine

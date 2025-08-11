@@ -13,7 +13,10 @@ export class OtpController {
   })
   @ApiResponse({ status: 400, description: 'Invalid/bad request' })
   generateToken(@Ip() author: string, @Headers('userId') userId: string) {
-    return this.otpService.generateToken(author, userId);
+    return this.otpService.generateToken({
+      author,
+      userId,
+    });
   }
 
   @Get('validate')
@@ -22,6 +25,10 @@ export class OtpController {
     @Headers('token') token: string,
     @Headers('userId') userId: string,
   ) {
-    return this.otpService.validateToken(author, token, userId);
+    return this.otpService.validateToken({
+      author,
+      token,
+      userId,
+    });
   }
 }

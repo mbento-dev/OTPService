@@ -1,10 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { OtpTokenResponse } from './dtos/otp-token-response.interface';
+import { OtpTokenResponse } from './dtos/otpTokenResponse.interface';
 import moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OtpToken } from './otpToken.entity';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { authenticator } from 'otplib';
+import { GenerateTokenPayload } from './dtos/generateTokenPayload.interface';
+import { ValidateTokenPayload } from './dtos/validateTokenPayload.interface';
 
 @Injectable()
 export class OtpService {
@@ -12,11 +14,17 @@ export class OtpService {
     @InjectRepository(OtpToken)
     private otpTokenRepo: Repository<OtpToken>,
   ) {}
-  private validateAuthor(author: string) {
+
+  public validateGenerateTokenPayload(payload: GenerateTokenPayload) {
     const errors: Array<{ error: string }> = [];
-    if (!author) {
+    if (!payload.author) {
       errors.push({
         error: 'origin not found',
+      });
+    }
+    if (!payload.userId) {
+      errors.push({
+        error: 'user not found',
       });
     }
     if (errors.length > 0) {
@@ -30,21 +38,19 @@ export class OtpService {
   }
 
   async generateToken(
-    author: string,
-    userId: string,
+    payload: GenerateTokenPayload,
   ): Promise<OtpTokenResponse> {
-    console.log();
-    this.validateAuthor(author);
+    this.validateGenerateTokenPayload(payload);
     const tokenResponse: OtpTokenResponse = new OtpTokenResponse();
 
     const expiresAt: Date = moment().add(5, 'm').toDate();
 
-    const secret = userId + expiresAt.toTimeString();
+    const secret = payload.userId + expiresAt.toTimeString();
 
     const otp = await this.otpTokenRepo.save({
       token: authenticator.generate(secret),
-      userId,
-      createdBy: author,
+      userId: payload.userId,
+      createdBy: payload.author,
       expiresAt: expiresAt,
     });
 
@@ -54,13 +60,40 @@ export class OtpService {
     return tokenResponse;
   }
 
-  async validateToken(author: string, token: string, userId: string) {
-    this.validateAuthor(author);
+  private validateValidateTokenPayload(payload: ValidateTokenPayload) {
+    const errors: Array<{ error: string }> = [];
+    if (!payload.author) {
+      errors.push({
+        error: 'origin not found',
+      });
+    }
+    if (!payload.userId) {
+      errors.push({
+        error: 'user not found',
+      });
+    }
+    if (!payload.token) {
+      errors.push({
+        error: 'token not found',
+      });
+    }
+    if (errors.length > 0) {
+      throw new HttpException(
+        {
+          error: errors.flatMap(({ error }) => error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async validateToken(payload: ValidateTokenPayload) {
+    this.validateValidateTokenPayload(payload);
 
     const otp = await this.otpTokenRepo.findOne({
       where: {
-        userId,
-        token,
+        userId: payload.userId,
+        token: payload.token,
         expiresAt: MoreThan(moment().toDate()),
         usedAt: IsNull(),
       },
@@ -73,7 +106,7 @@ export class OtpService {
       );
 
     otp.usedAt = moment().toDate();
-    otp.usedBy = author;
+    otp.usedBy = payload.author;
 
     await this.otpTokenRepo.save(otp);
 
