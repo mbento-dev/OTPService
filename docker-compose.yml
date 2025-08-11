@@ -11,6 +11,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_HOST: db
       POSTGRES_SYNCRHONIZE: "true"
+      EXPIRATION_TIME_IN_SECONDS: 300
     ports:
       - '3000:3000'
     depends_on:
@@ -28,6 +29,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_HOST: db
       POSTGRES_SYNCRHONIZE: "true"
+      EXPIRATION_TIME_IN_SECONDS: 300
     ports:
       - '3000:3000'
     depends_on:

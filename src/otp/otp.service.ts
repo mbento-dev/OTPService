@@ -43,7 +43,9 @@ export class OtpService {
     this.validateGenerateTokenPayload(payload);
     const tokenResponse: OtpTokenResponse = new OtpTokenResponse();
 
-    const expiresAt: Date = moment().add(5, 'm').toDate();
+    const expiresAt: Date = moment()
+      .add(process.env.EXPIRATION_TIME_IN_SECONDS, 's')
+      .toDate();
 
     const secret = payload.userId + expiresAt.toTimeString();
 
