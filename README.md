@@ -22,7 +22,7 @@ $ docker compose up app
 $ yarn run test
 
 # e2e tests
-$ yarn run test:e2e
+$ docker compose up test
 
 # test coverage
 $ yarn run test:cov
@@ -52,6 +52,22 @@ sequenceDiagram
     destroy serv
     serv->>user: return otp data
 ```
+
+### Checking an OTP Token
+
+```mermaid
+sequenceDiagram
+    create participant user
+    create participant serv as otp-service
+    user->>serv: send otp token
+    create participant db as database
+    serv->>db: check if token exists
+    destroy db
+    db->>serv: update the token usage
+    destroy serv
+    serv->>user: return system permission
+```
+
 
 
 ## License
